@@ -141,7 +141,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           <Typography variant="h5" component="h1">
             Detail Pengajuan SKCK
           </Typography>
-          <Box>
+          <Box sx={{ display: 'flex', gap: 2, mr: 4 }}>
             {application.status === 'approved' && (
               <BlobProvider document={<SKCKPdf data={application} />}>
                 {({ blob, url, loading, error }) => {
@@ -158,13 +158,21 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                     );
                   }
                   
+                  if (!url) {
+                    return loading ? (
+                      <Button variant="contained" disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Menyiapkan...
+                      </Button>
+                    ) : null;
+                  }
+
                   return (
                     <Button 
                       variant="contained" 
                       color="primary"
-                      href={url || ''}
+                      href={url}
                       download={`SKCK_${application.namaLengkap}.pdf`}
-                      disabled={loading || !url}
                       startIcon={loading ? <CircularProgress size={20} /> : undefined}
                     >
                       {loading ? 'Menyiapkan...' : 'Unduh SKCK'}
