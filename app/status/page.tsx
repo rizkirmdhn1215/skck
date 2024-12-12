@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -24,17 +26,22 @@ interface Application {
   keperluanSKCK: string;
 }
 
-export default function Status() {
+export default function StatusPage() {
+  const { user, loading } = useAuth();
   const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
+    if (loading) return; // Wait for auth to initialize
+    
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Only fetch data if we have a user
     const fetchApplications = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) return;
-
         const applicationsRef = collection(db, 'skck_applications');
         const q = query(
           applicationsRef,
@@ -51,13 +58,11 @@ export default function Status() {
         setApplications(apps);
       } catch (error) {
         console.error('Error fetching applications:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchApplications();
-  }, []);
+  }, [user, loading, router]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -75,15 +80,8 @@ export default function Status() {
     }
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-          <CircularProgress />
-        </Box>
-      </DashboardLayout>
-    );
-  }
+  if (loading) return <LoadingSpinner />;
+  if (!user) return null;
 
   return (
     <DashboardLayout>

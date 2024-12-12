@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { BlobProvider } from '@react-pdf/renderer';
 import { SKCKPdf } from '../../components/SKCKPdf';
 
 interface SKCKApplication {
@@ -142,15 +142,37 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             Detail Pengajuan SKCK
           </Typography>
           <Box>
-            <PDFDownloadLink
-              document={<SKCKPdf data={application} />}
-              fileName={`SKCK_${application.namaLengkap}.pdf`}
-              style={{ textDecoration: 'none' }}
-            >
-              <Button variant="contained" color="primary" sx={{ mr: 2 }}>
-                Unduh PDF
-              </Button>
-            </PDFDownloadLink>
+            {application.status === 'approved' && (
+              <BlobProvider document={<SKCKPdf data={application} />}>
+                {({ blob, url, loading, error }) => {
+                  if (error) {
+                    toast.error('Gagal membuat PDF');
+                    return (
+                      <Button 
+                        variant="contained" 
+                        color="error"
+                        onClick={() => window.location.reload()}
+                      >
+                        Coba Lagi
+                      </Button>
+                    );
+                  }
+                  
+                  return (
+                    <Button 
+                      variant="contained" 
+                      color="primary"
+                      href={url || ''}
+                      download={`SKCK_${application.namaLengkap}.pdf`}
+                      disabled={loading || !url}
+                      startIcon={loading ? <CircularProgress size={20} /> : undefined}
+                    >
+                      {loading ? 'Menyiapkan...' : 'Unduh SKCK'}
+                    </Button>
+                  );
+                }}
+              </BlobProvider>
+            )}
             <Button variant="outlined" onClick={() => router.push('/status')}>
               Kembali
             </Button>
